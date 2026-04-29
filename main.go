@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/subtle"
 	"encoding/hex"
@@ -10,13 +9,15 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"net/smtp"
+
 	"os"
 	"regexp"
 	"strings"
 	"sync"
 	"time"
 	"unicode/utf8"
+
+	"github.com/resend/resend-go/v2"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
@@ -435,17 +436,18 @@ func sendEmail(to, subject, body string) error {
 	if !emailRegexp.MatchString(to) {
 		return fmt.Errorf("invalid recipient email: %s", to)
 	}
-	msg := []byte("From: " + SMTP_FROM + "\r\n" +
-		"To: " + to + "\r\n" +
-		"Subject: " + subject + "\r\n" +
-		"Content-Type: text/html; charset=UTF-8\r\n" +
-		"\r\n" +
-		body)
-	auth := smtp.PlainAuth("", SMTP_USERNAME, SMTP_PASSWORD, SMTP_HOST)
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	_ = ctx // smtp.SendMail doesn't accept a context; timeout handled at OS level via dial
-	return smtp.SendMail(SMTP_HOST+":"+SMTP_PORT, auth, SMTP_USERNAME, []string{to}, msg)
+
+	client := resend.NewClient(SMTP_PASSWORD)
+
+	params := &resend.SendEmailRequest{
+		From:    SMTP_FROM,
+		To:      []string{to},
+		Subject: subject,
+		Html:    body,
+	}
+
+	_, err := client.Emails.Send(params)
+	return err
 }
 
 func sendProjectWelcomeEmail(toEmail, clientName, projectTitle, magicLink string) {
