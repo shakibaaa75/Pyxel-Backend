@@ -5,6 +5,7 @@ go 1.25.6
 require (
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
+	github.com/resend/resend-go/v2 v2.28.0 // indirect
 	golang.org/x/crypto v0.50.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 )
